@@ -1,0 +1,35 @@
+linters:
+  enable:
+    # Core linters for code quality
+    - gofmt # Enforces standard Go formatting
+    - govet # Reports suspicious constructs
+    - errcheck # Checks error handling
+    - staticcheck # Advanced static analysis
+
+    # Functional programming focused linters
+    - prealloc # Finds slice preallocations that could be avoided
+    - goconst # Finds repeated strings that could be constants
+    - unparam # Reports unused function parameters
+    - reassign # Checks for reassigned variables (helps maintain immutability)
+
+    # Code simplicity
+    - gosimple # Suggests code simplifications
+    - ineffassign # Detects ineffective assignments
+
+    # Documentation
+    - godot # Check if comments end in a period
+    - misspell # Finds commonly misspelled English words
+
+run:
+  deadline: 5m
+  tests: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  # Exclude some annoying lints while learning
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck # More relaxed error checking in tests
