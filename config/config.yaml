@@ -1,6 +1,7 @@
 # Directory Structure
 paths:
   base:
+    inbox: inbox.md
     tasks: /tasks
     journal: /journal
     lists: /lists
@@ -9,8 +10,6 @@ paths:
 
   subdirs:
     tasks:
-      action_items: ${paths.base.tasks}/action-items
-      projects: ${paths.base.tasks}/projects
       completed: ${paths.base.tasks}/completed
 
     journal:
@@ -25,7 +24,7 @@ journals:
 settings:
   retention:
     empty_task: 30
-    content_task: 7
+    project_before_archive: 7
 
   patterns:
     date_format: "YYYY-MM-DD"
