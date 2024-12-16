@@ -31,7 +31,7 @@ vet:
 	$(GOVET) ./...
 
 lint:
-	golangci-lint run -v
+	golangci-lint run
 
 tidy:
 	$(GOCMD) mod tidy
@@ -39,11 +39,8 @@ tidy:
 generate:
 	$(GOGENERATE) ./...
 
-docker-lint:
-	act push -W .github/workflows/lint.yml --container-architecture linux/amd64
-
-docker-test:
-	act push -W .github/workflows/test.yml --container-architecture linux/amd64
+docker-ci:
+	act push -W .github/workflows/ci.yml --container-architecture linux/amd64 # must git push first!
 
 watch-test:
 	go install github.com/cespare/reflex@latest

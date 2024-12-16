@@ -14,6 +14,15 @@ type MarkdownDocument struct {
 }
 
 func ParseMarkdownDoc(filepath string) (MarkdownDocument, error) {
+	// ParseMarkdownDoc reads and parses a markdown file, separating YAML frontmatter from content
+	// Frontmatter must be at the start of the file, enclosed by "---" markers
+
+	// filepath specifies the markdown file location
+	// Returns MarkdownDocument containing parsed frontmatter map and content string
+
+	// Returns error if file is inaccessible or if structure is invalid:
+	// whitespace before frontmatter, multiple frontmatter blocks, incorrect markers, invalid YAML
+
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return MarkdownDocument{}, fmt.Errorf("failed to read file: %w", err)

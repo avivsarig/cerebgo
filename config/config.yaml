@@ -1,0 +1,32 @@
+# Directory Structure
+paths:
+  base:
+    tasks: /tasks
+    journal: /journal
+    lists: /lists
+    people: /people
+    archives: /archives
+
+  subdirs:
+    tasks:
+      action_items: ${paths.base.tasks}/action-items
+      projects: ${paths.base.tasks}/projects
+      completed: ${paths.base.tasks}/completed
+
+    journal:
+      completed: ${paths.base.journal}/completed
+
+# User Journals
+journals:
+  - name: belle
+  - name: pure
+
+# System Settings
+settings:
+  retention:
+    empty_task: 30
+    content_task: 7
+
+  patterns:
+    date_format: "YYYY-MM-DD"
+    file_format: "*-${date_format}"
