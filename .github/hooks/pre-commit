@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e  # Exit on any error
+
+echo "Running pre-commit checks..."
+
+# Run formatters first (these modify files)
+echo "Formatting code..."
+make fmt
+
+# Run checks (these just report issues)
+echo "Running go vet..."
+make vet
+
+echo "Running linter..."
+make lint
+
+echo "Running tests..."
+make test
+
+# If we got here, all checks passed
+echo "All checks passed! 🎉"
