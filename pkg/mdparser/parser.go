@@ -3,27 +3,33 @@ package mdparser
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
 type MarkdownDocument struct {
+	Title       string
 	Frontmatter map[string]interface{}
 	Content     string
 }
 
-func ParseMarkdownDoc(filepath string) (MarkdownDocument, error) {
+func ParseMarkdownDoc(filePath string) (MarkdownDocument, error) {
 	// ParseMarkdownDoc reads and parses a markdown file, separating YAML frontmatter from content
 	// Frontmatter must be at the start of the file, enclosed by "---" markers
 
-	// filepath specifies the markdown file location
+	// filePath specifies the markdown file location
 	// Returns MarkdownDocument containing parsed frontmatter map and content string
 
 	// Returns error if file is inaccessible or if structure is invalid:
 	// whitespace before frontmatter, multiple frontmatter blocks, incorrect markers, invalid YAML
 
-	data, err := os.ReadFile(filepath)
+	// get Title for filePath
+	baseFile := filepath.Base(filePath)
+	title := strings.TrimSuffix(baseFile, filepath.Ext(baseFile))
+
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return MarkdownDocument{}, fmt.Errorf("failed to read file: %w", err)
 	}
@@ -32,7 +38,7 @@ func ParseMarkdownDoc(filepath string) (MarkdownDocument, error) {
 
 	// Empty file is valid
 	if strings.TrimSpace(content) == "" {
-		return MarkdownDocument{}, nil
+		return MarkdownDocument{Title: title}, nil
 	}
 
 	// First check whitespace
@@ -50,7 +56,7 @@ func ParseMarkdownDoc(filepath string) (MarkdownDocument, error) {
 	} else if strings.Contains(content, "---") {
 		return MarkdownDocument{}, fmt.Errorf("invalid markdown: content before frontmatter")
 	} else {
-		return MarkdownDocument{Content: trimmedContent}, nil
+		return MarkdownDocument{Title: title, Content: trimmedContent}, nil
 	}
 
 	// Look for closing frontmatter marker
@@ -90,6 +96,7 @@ func ParseMarkdownDoc(filepath string) (MarkdownDocument, error) {
 	}
 
 	return MarkdownDocument{
+		Title:       title,
 		Frontmatter: fm,
 		Content:     remainingContent,
 	}, nil
