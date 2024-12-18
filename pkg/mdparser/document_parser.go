@@ -47,12 +47,13 @@ func DocumetToTask(doc MarkdownDocument) (models.Task, error) {
 	return models.Task{
 		Title:          doc.Title,
 		Content:        ptr.Some(doc.Content),
-		IsProject:      false, // This will be determined by content analysis later
-		IsHighPriority: false, // TODO: FIX
+		IsProject:      false,
+		IsHighPriority: false,
+		Done:           false,
 		CreatedAt:      createdAt,
 		UpdatedAt:      updatedAt,
 		DueDate:        ptr.None[string](),
-		CompletedAt:    ptr.None[time.Time](), // New tasks start as not completed
+		CompletedAt:    ptr.None[time.Time](),
 	}, nil
 }
 func getFrontmatterString(fm map[string]interface{}, key string) (string, error) {

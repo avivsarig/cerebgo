@@ -55,7 +55,7 @@ func (p *Processor) ClearCompletedTasks(now time.Time) error {
 			return fmt.Errorf("failed to convert document to task %s: %w", entry.Name(), err)
 		}
 
-		// Skip if task is not completed
+		// TODO: !task.Done
 		if !task.CompletedAt.IsValid() {
 			// TODO: return to active tasks!
 			continue

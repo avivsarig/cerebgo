@@ -16,6 +16,7 @@ func CompletionModifier(completionTime time.Time) TaskModifier {
 			Content:        task.Content,
 			IsProject:      task.IsProject,
 			IsHighPriority: task.IsHighPriority,
+			Done:           true,
 			CompletedAt:    ptr.Some(completionTime),
 			DueDate:        task.DueDate,
 			DoDate:         task.DoDate,
