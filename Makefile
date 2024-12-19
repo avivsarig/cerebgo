@@ -29,7 +29,6 @@ test:
 coverage:
 	$(GOTEST) -cover ./...
 	$(GOTEST) -coverprofile=coverage.out ./...
-	$(GOCMD) tool cover -html=coverage.out
 
 # Catches common mistakes - run before committing code
 vet:

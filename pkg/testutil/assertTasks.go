@@ -14,6 +14,7 @@ func AssertTaskEqual(t *testing.T, got, want models.Task) {
 		ValidateEqual("Title", got.Title, want.Title),
 		ValidateEqual("IsProject", got.IsProject, want.IsProject),
 		ValidateEqual("IsHighPriority", got.IsHighPriority, want.IsHighPriority),
+		ValidateEqual("Done", got.Done, want.Done),
 
 		// Optional fields
 		ValidateOptional("Content", got.Content, want.Content, StringComparer),
