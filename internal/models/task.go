@@ -11,7 +11,7 @@ type Task struct {
 	Content        ptr.Option[string]
 	IsProject      bool
 	IsHighPriority bool
-	Done           bool // NEW
+	Done           bool
 	CompletedAt    ptr.Option[time.Time]
 	DueDate        ptr.Option[string] // YYYY-MM-DD format
 	DoDate         string             // YYYY-MM-DD format, required

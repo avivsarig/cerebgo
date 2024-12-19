@@ -23,12 +23,57 @@ func TestCompletionModifier(t *testing.T) {
 		want           models.Task
 	}{
 		{
+			name: "complete_task_sets_both_flags",
+			input: models.Task{
+				Title:       "Test Task",
+				Content:     ptr.Some("content"),
+				Done:        false,
+				CompletedAt: ptr.None[time.Time](),
+				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				DoDate:      baseDateStr,
+			},
+			completionTime: baseTime,
+			currentTime:    baseTime,
+			want: models.Task{
+				Title:       "Test Task",
+				Content:     ptr.Some("content"),
+				Done:        true,
+				CompletedAt: ptr.Some(baseTime),
+				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				UpdatedAt:   baseTime,
+				DoDate:      baseDateStr,
+			},
+		},
+		{
+			name: "already_done_without_completion_time",
+			input: models.Task{
+				Title:       "Weird State Task",
+				Content:     ptr.Some("content"),
+				Done:        true,
+				CompletedAt: ptr.None[time.Time](),
+				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				DoDate:      baseDateStr,
+			},
+			completionTime: baseTime,
+			currentTime:    baseTime,
+			want: models.Task{
+				Title:       "Weird State Task",
+				Content:     ptr.Some("content"),
+				Done:        true,
+				CompletedAt: ptr.Some(baseTime),
+				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				UpdatedAt:   baseTime,
+				DoDate:      baseDateStr,
+			},
+		},
+		{
 			name: "complete_uncompleted_task",
 			input: models.Task{
 				Title:          "Test Task",
 				Content:        ptr.Some("content"),
 				IsProject:      false,
 				IsHighPriority: true,
+				Done:           false,
 				CompletedAt:    ptr.None[time.Time](),
 				CreatedAt:      baseTime.Add(-2 * time.Hour),
 				DueDate:        ptr.Some(futureDateStr),
@@ -41,6 +86,7 @@ func TestCompletionModifier(t *testing.T) {
 				Content:        ptr.Some("content"),
 				IsProject:      false,
 				IsHighPriority: true,
+				Done:           true,
 				CompletedAt:    ptr.Some(baseTime.Add(-1 * time.Hour)),
 				CreatedAt:      baseTime.Add(-2 * time.Hour),
 				UpdatedAt:      baseTime,
@@ -53,19 +99,23 @@ func TestCompletionModifier(t *testing.T) {
 			input: models.Task{
 				Title:          "Already Complete Task",
 				Content:        ptr.Some("content"),
+				Done:           true,
 				CompletedAt:    ptr.Some(baseTime.Add(-2 * time.Hour)),
 				CreatedAt:      baseTime.Add(-3 * time.Hour),
 				IsHighPriority: false,
+				DoDate:         baseDateStr,
 			},
 			completionTime: baseTime.Add(-1 * time.Hour),
 			currentTime:    baseTime,
 			want: models.Task{
 				Title:          "Already Complete Task",
 				Content:        ptr.Some("content"),
-				CompletedAt:    ptr.Some(baseTime.Add(-1 * time.Hour)), // Should override previous completion time
+				Done:           true,
+				CompletedAt:    ptr.Some(baseTime.Add(-2 * time.Hour)),
 				CreatedAt:      baseTime.Add(-3 * time.Hour),
 				UpdatedAt:      baseTime,
 				IsHighPriority: false,
+				DoDate:         baseDateStr,
 			},
 		},
 		{
@@ -73,17 +123,21 @@ func TestCompletionModifier(t *testing.T) {
 			input: models.Task{
 				Title:       "Minimal Task",
 				Content:     ptr.None[string](),
+				Done:        false,
 				CompletedAt: ptr.None[time.Time](),
 				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				DoDate:      baseDateStr,
 			},
 			completionTime: baseTime,
 			currentTime:    baseTime,
 			want: models.Task{
 				Title:       "Minimal Task",
 				Content:     ptr.None[string](),
+				Done:        true,
 				CompletedAt: ptr.Some(baseTime),
 				CreatedAt:   baseTime.Add(-1 * time.Hour),
 				UpdatedAt:   baseTime,
+				DoDate:      baseDateStr,
 			},
 		},
 		{
@@ -92,8 +146,10 @@ func TestCompletionModifier(t *testing.T) {
 				Title:       "Project Task",
 				Content:     ptr.Some("project content"),
 				IsProject:   true,
+				Done:        false,
 				CompletedAt: ptr.None[time.Time](),
 				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				DoDate:      baseDateStr,
 			},
 			completionTime: baseTime,
 			currentTime:    baseTime,
@@ -101,17 +157,106 @@ func TestCompletionModifier(t *testing.T) {
 				Title:       "Project Task",
 				Content:     ptr.Some("project content"),
 				IsProject:   true,
+				Done:        true,
 				CompletedAt: ptr.Some(baseTime),
 				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				UpdatedAt:   baseTime,
+				DoDate:      baseDateStr,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CompletionModifier(tt.completionTime)(tt.input, tt.currentTime)
+			testutil.AssertTaskEqual(t, got, tt.want)
+		})
+	}
+}
+
+func TestUncompleteModifier(t *testing.T) {
+	baseTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
+	baseDateStr := baseTime.Format("2006-01-02")
+	futureDateStr := baseTime.Add(24 * time.Hour).Format("2006-01-02")
+
+	tests := []struct {
+		name        string
+		input       models.Task
+		currentTime time.Time
+		want        models.Task
+	}{
+		{
+			name: "uncomplete_completed_task",
+			input: models.Task{
+				Title:          "Completed Task",
+				Content:        ptr.Some("content"),
+				Done:           true,
+				CompletedAt:    ptr.Some(baseTime.Add(-1 * time.Hour)),
+				CreatedAt:      baseTime.Add(-2 * time.Hour),
+				IsHighPriority: true,
+				DueDate:        ptr.Some(futureDateStr),
+				DoDate:         baseDateStr,
+			},
+			currentTime: baseTime,
+			want: models.Task{
+				Title:          "Completed Task",
+				Content:        ptr.Some("content"),
+				Done:           false,
+				CompletedAt:    ptr.None[time.Time](),
+				CreatedAt:      baseTime.Add(-2 * time.Hour),
+				UpdatedAt:      baseTime,
+				IsHighPriority: true,
+				DueDate:        ptr.Some(futureDateStr),
+				DoDate:         baseDateStr,
+			},
+		},
+		{
+			name: "uncomplete_already_uncompleted_task",
+			input: models.Task{
+				Title:       "Uncompleted Task",
+				Content:     ptr.Some("content"),
+				Done:        false,
+				CompletedAt: ptr.None[time.Time](),
+				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				DoDate:      baseDateStr,
+			},
+			currentTime: baseTime,
+			want: models.Task{
+				Title:       "Uncompleted Task",
+				Content:     ptr.Some("content"),
+				Done:        false,
+				CompletedAt: ptr.None[time.Time](),
+				CreatedAt:   baseTime.Add(-1 * time.Hour),
+				UpdatedAt:   baseTime,
+				DoDate:      baseDateStr,
+			},
+		},
+		{
+			name: "uncomplete_project_task",
+			input: models.Task{
+				Title:       "Project Task",
+				Content:     ptr.Some("content"),
+				IsProject:   true,
+				Done:        true,
+				CompletedAt: ptr.Some(baseTime.Add(-1 * time.Hour)),
+				CreatedAt:   baseTime.Add(-2 * time.Hour),
+			},
+			currentTime: baseTime,
+			want: models.Task{
+				Title:       "Project Task",
+				Content:     ptr.Some("content"),
+				IsProject:   true,
+				Done:        false,
+				CompletedAt: ptr.None[time.Time](),
+				CreatedAt:   baseTime.Add(-2 * time.Hour),
 				UpdatedAt:   baseTime,
 			},
 		},
 	}
 
-	// Run all test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CompletionModifier(tt.completionTime)(tt.input, tt.currentTime)
+			got := UncompleteModifier()(tt.input, tt.currentTime)
 			testutil.AssertTaskEqual(t, got, tt.want)
 		})
 	}
@@ -136,8 +281,9 @@ func TestProjectModifier(t *testing.T) {
 				Content:        ptr.Some("content"),
 				IsProject:      false,
 				IsHighPriority: true,
-				CompletedAt:    ptr.None[time.Time](),
-				CreatedAt:      baseTime.Add(-1 * time.Hour),
+				Done:           true,
+				CompletedAt:    ptr.Some(baseTime.Add(-1 * time.Hour)),
+				CreatedAt:      baseTime.Add(-2 * time.Hour),
 				DueDate:        ptr.Some(futureDateStr),
 				DoDate:         baseDateStr,
 			},
@@ -145,10 +291,11 @@ func TestProjectModifier(t *testing.T) {
 			want: models.Task{
 				Title:          "Regular Task",
 				Content:        ptr.Some("content"),
-				IsProject:      true, // Should be converted to project
+				IsProject:      true,
 				IsHighPriority: true,
-				CompletedAt:    ptr.None[time.Time](),
-				CreatedAt:      baseTime.Add(-1 * time.Hour),
+				Done:           true,
+				CompletedAt:    ptr.Some(baseTime.Add(-1 * time.Hour)),
+				CreatedAt:      baseTime.Add(-2 * time.Hour),
 				UpdatedAt:      baseTime,
 				DueDate:        ptr.Some(futureDateStr),
 				DoDate:         baseDateStr,
@@ -161,7 +308,8 @@ func TestProjectModifier(t *testing.T) {
 				Content:        ptr.Some("project content"),
 				IsProject:      true,
 				IsHighPriority: false,
-				CompletedAt:    ptr.Some(baseTime.Add(-2 * time.Hour)),
+				Done:           false,
+				CompletedAt:    ptr.None[time.Time](),
 				CreatedAt:      baseTime.Add(-3 * time.Hour),
 			},
 			currentTime: baseTime,
@@ -170,7 +318,8 @@ func TestProjectModifier(t *testing.T) {
 				Content:        ptr.Some("project content"),
 				IsProject:      true,
 				IsHighPriority: false,
-				CompletedAt:    ptr.Some(baseTime.Add(-2 * time.Hour)),
+				Done:           false,
+				CompletedAt:    ptr.None[time.Time](),
 				CreatedAt:      baseTime.Add(-3 * time.Hour),
 				UpdatedAt:      baseTime,
 			},
@@ -180,6 +329,7 @@ func TestProjectModifier(t *testing.T) {
 			input: models.Task{
 				Title:       "Minimal Task",
 				Content:     ptr.None[string](),
+				Done:        false,
 				CreatedAt:   baseTime.Add(-1 * time.Hour),
 				CompletedAt: ptr.None[time.Time](),
 			},
@@ -188,6 +338,7 @@ func TestProjectModifier(t *testing.T) {
 				Title:       "Minimal Task",
 				Content:     ptr.None[string](),
 				IsProject:   true,
+				Done:        false,
 				CreatedAt:   baseTime.Add(-1 * time.Hour),
 				UpdatedAt:   baseTime,
 				CompletedAt: ptr.None[time.Time](),
