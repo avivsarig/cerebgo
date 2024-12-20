@@ -15,6 +15,12 @@ type RetentionConfig struct {
 	ProjectRetention   time.Duration
 }
 
+type TaskRetentionResult struct {
+	FilePath     string
+	ShouldRetain bool
+	Error        error
+}
+
 func ShouldRetainTask(task models.Task, now time.Time, config RetentionConfig) bool {
 	if !IsCompleted(task) {
 		return true
@@ -25,12 +31,6 @@ func ShouldRetainTask(task models.Task, now time.Time, config RetentionConfig) b
 		return completedAge <= config.ProjectRetention
 	}
 	return completedAge <= config.EmptyTaskRetention
-}
-
-type TaskRetentionResult struct {
-	FilePath     string
-	ShouldRetain bool
-	Error        error
 }
 
 func clearCompletedTasks(completedPath string, now time.Time, config RetentionConfig) error {
@@ -60,7 +60,7 @@ func clearCompletedTasks(completedPath string, now time.Time, config RetentionCo
 	return nil
 }
 
-func (p *Processor) ClearCompletedTasks(now time.Time) error {
+func ClearCompletedTasks(p Processor, now time.Time) error {
 	completedPath := p.config.GetString("paths.subdirs.tasks.completed")
 	config := RetentionConfig{
 		EmptyTaskRetention: time.Duration(p.config.GetInt("settings.retention.empty_task")) * 24 * time.Hour,

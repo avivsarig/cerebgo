@@ -9,23 +9,24 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// MarkdownDocument represents a parsed markdown content with its metadata.
 type MarkdownDocument struct {
 	Title       string
 	Frontmatter map[string]interface{}
 	Content     string
 }
 
+// ParseMarkdownDoc parses raw markdown text into a structured MarkdownDocument.
+// Handles headers, code blocks, paragraphs and basic markdown syntax.
+//
+// Parameters:
+//   - content: Raw markdown string to parse
+//
+// Returns:
+//
+//	Parsed MarkdownDocument, or error if parsing fails
 func ParseMarkdownDoc(filePath string) (MarkdownDocument, error) {
-	// ParseMarkdownDoc reads and parses a markdown file, separating YAML frontmatter from content
-	// Frontmatter must be at the start of the file, enclosed by "---" markers
 
-	// filePath specifies the markdown file location
-	// Returns MarkdownDocument containing parsed frontmatter map and content string
-
-	// Returns error if file is inaccessible or if structure is invalid:
-	// whitespace before frontmatter, multiple frontmatter blocks, incorrect markers, invalid YAML
-
-	// get Title for filePath
 	baseFile := filepath.Base(filePath)
 	title := strings.TrimSuffix(baseFile, filepath.Ext(baseFile))
 
@@ -83,6 +84,7 @@ func ParseMarkdownDoc(filePath string) (MarkdownDocument, error) {
 	}
 
 	// Parse frontmatter
+	// TODO: consider adding validation against schema here.
 	frontmatter := strings.Join(lines[1:closingIndex], "\n")
 	var fm map[string]interface{}
 	if err := yaml.Unmarshal([]byte(frontmatter), &fm); err != nil {

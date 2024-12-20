@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/viper" // Added this import
+	"github.com/spf13/viper"
 )
 
 type Processor struct {
@@ -24,7 +24,7 @@ func (p *Processor) ProcessAllTasks(now time.Time) error {
 		ProjectRetention:   time.Duration(p.config.GetInt("settings.retention.project_before_archive")) * 24 * time.Hour,
 	}
 
-	// Actually use the config by passing it to our processing functions
+	// TODO: CLEAR COMPLETED TASKS FIRST
 	tasks, err := readTasksFromDirectory(p.config.GetString("paths.base.tasks"))
 	if err != nil {
 		return fmt.Errorf("failed to read tasks: %w", err)
