@@ -10,17 +10,28 @@ import (
 	"github.com/avivSarig/cerebgo/pkg/mdparser"
 )
 
+// RetentionConfig defines the retention periods for tasks based on their type.
 type RetentionConfig struct {
 	EmptyTaskRetention time.Duration
 	ProjectRetention   time.Duration
 }
 
+// TaskRetentionResult represents the outcome of evaluating a task for retention.
 type TaskRetentionResult struct {
 	FilePath     string
 	ShouldRetain bool
 	Error        error
 }
 
+// ShouldRetainTask checks whether a completed task should be retained based on its type and age.
+//
+// Parameters:
+//   - task: The task to evaluate.
+//   - now: The current timestamp.
+//   - config: Retention rules for completed tasks.
+//
+// Returns:
+//   - bool: True if the task should be retained, false otherwise.
 func ShouldRetainTask(task models.Task, now time.Time, config RetentionConfig) bool {
 	if !IsCompleted(task) {
 		return true
@@ -33,6 +44,15 @@ func ShouldRetainTask(task models.Task, now time.Time, config RetentionConfig) b
 	return completedAge <= config.EmptyTaskRetention
 }
 
+// clearCompletedTasks deletes completed task files that no longer meet retention criteria.
+//
+// Parameters:
+//   - completedPath: The directory containing completed task files.
+//   - now: The current timestamp.
+//   - config: Retention rules for completed tasks.
+//
+// Returns:
+//   - error: An error if file deletion or directory reading fails.
 func clearCompletedTasks(completedPath string, now time.Time, config RetentionConfig) error {
 	entries, err := os.ReadDir(completedPath)
 	if err != nil {
@@ -60,6 +80,14 @@ func clearCompletedTasks(completedPath string, now time.Time, config RetentionCo
 	return nil
 }
 
+// ClearCompletedTasks processes and clears completed tasks from the storage based on retention settings.
+//
+// Parameters:
+//   - p: Processor containing configuration and context.
+//   - now: The current timestamp.
+//
+// Returns:
+//   - error: An error if the clearing process fails.
 func ClearCompletedTasks(p Processor, now time.Time) error {
 	completedPath := p.config.GetString("paths.subdirs.tasks.completed")
 	config := RetentionConfig{
@@ -70,6 +98,16 @@ func ClearCompletedTasks(p Processor, now time.Time) error {
 	return clearCompletedTasks(completedPath, now, config)
 }
 
+// processEntry evaluates a single task file to determine if it should be retained or deleted.
+//
+// Parameters:
+//   - entry: The file entry to process.
+//   - basePath: Base directory path for the task files.
+//   - now: The current timestamp.
+//   - config: Retention rules for completed tasks.
+//
+// Returns:
+//   - TaskRetentionResult: The evaluation result including file path, retention decision, and any error.
 func processEntry(entry os.DirEntry, basePath string, now time.Time, config RetentionConfig) TaskRetentionResult {
 	if entry.IsDir() || filepath.Ext(entry.Name()) != ".md" {
 		return TaskRetentionResult{ShouldRetain: true}

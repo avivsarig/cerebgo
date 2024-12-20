@@ -25,6 +25,14 @@ func (p *Processor) ProcessAllTasks(now time.Time) error {
 	}
 
 	// TODO: CLEAR COMPLETED TASKS FIRST
+	completedTasks, err := readTasksFromDirectory(p.config.GetString("paths.subdir.tasks.completed"))
+	if err != nil {
+		return fmt.Errorf("failed to read tasks: %w", err)
+	}
+
+	// TODO: PROCESS COMPLETED TASKS
+	ProcessTasks(completedTasks, now, config)
+
 	tasks, err := readTasksFromDirectory(p.config.GetString("paths.base.tasks"))
 	if err != nil {
 		return fmt.Errorf("failed to read tasks: %w", err)
