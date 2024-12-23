@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/avivSarig/cerebgo/internal/models"
+	"github.com/avivSarig/cerebgo/pkg/files"
 	"github.com/avivSarig/cerebgo/pkg/mdparser"
 	"github.com/avivSarig/cerebgo/pkg/ptr"
 )
@@ -73,12 +74,6 @@ func readTasksFromDirectory(dir string) ([]models.Task, error) {
 	return tasks, nil
 }
 
-// func writeTaskToFile(task models.Task, path string) error {
-// 	// TODO: Implement task to markdown conversion.
-// 	// For now we'll leave this as a stub until we implement the conversion logic.
-// 	return nil
-// }
-
 // DocumentToTask converts a markdown document into a Task model. It extracts task metadata
 // from the document's frontmatter and content.
 //
@@ -145,3 +140,29 @@ func DocumentToTask(doc mdparser.MarkdownDocument) (models.Task, error) {
 
 	return task, nil
 }
+
+func DeleteTaskFile(task models.Task, path string) error {
+	src := files.FilePath{
+		Dir:  path,
+		Name: task.Title + ".md",
+	}
+
+	if err := files.DeleteFile(src); err != nil {
+		return fmt.Errorf("failed to delete file %s: %w", src.Name, err)
+	}
+	return nil
+}
+
+// TODO: Implement writeTaskToFile
+// func writeTaskToFile(task models.Task, path string) error {
+// 	fm, doc := TaskToDoc(task)
+// 	return mdparser.WriteMarkdownDoc(fm, doc, path)
+// }
+
+// 	TODO: Implement ArchiveTask
+// Create an archive item in the archive directory
+// Populate new item with task data
+// Delete the original task file
+// func ArchiveTask(task models.Task, path string) error {
+// 	return nil
+// }
