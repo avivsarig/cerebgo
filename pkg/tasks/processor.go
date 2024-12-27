@@ -16,7 +16,7 @@ func ProcessAllTasks(now time.Time, configuration *viper.Viper) error {
 	completedTasksPath := configuration.GetString("paths.subdir.tasks.completed")
 	activeTasksPath := configuration.GetString("paths.subdir.tasks.completed")
 
-	// TODO: add logging
+	// FUTURE: add logging
 
 	// process completed tasks:
 	completedTasks, err := readTasksFromDirectory(completedTasksPath)
@@ -29,14 +29,15 @@ func ProcessAllTasks(now time.Time, configuration *viper.Viper) error {
 			return fmt.Errorf("failed to process completed tasks: %w", err)
 		}
 
-		// TODO: remove placeholder
-		_ = modifiers
-		// for _, modifier := range modifiers {
-		// 	task, err = modifier(task)
-		// 	if err != nil {
-		// 		return fmt.Errorf("failed to apply task modifier: %w", err)
-		// 	}
-		// }
+		resultTask, err := ApplyModifiers(task, now, modifiers...)
+		if err != nil {
+			return fmt.Errorf("failed to apply task modifiers: %w", err)
+		}
+
+		err = RewriteTask(resultTask, completedTasksPath)
+		if err != nil {
+			return fmt.Errorf("failed to rewrite task: %w", err)
+		}
 	}
 
 	// process active tasks:
@@ -51,14 +52,15 @@ func ProcessAllTasks(now time.Time, configuration *viper.Viper) error {
 			return fmt.Errorf("failed to process active tasks: %w", err)
 		}
 
-		// TODO: remove placeholder
-		_ = modifiers
-		// for _, modifier := range modifiers {
-		// 	task, err = modifier(task)
-		// 	if err != nil {
-		// 		return fmt.Errorf("failed to apply task modifier: %w", err)
-		// 	}
-		// }
+		resultTask, err := ApplyModifiers(task, now, modifiers...)
+		if err != nil {
+			return fmt.Errorf("failed to apply task modifiers: %w", err)
+		}
+
+		err = RewriteTask(resultTask, activeTasksPath)
+		if err != nil {
+			return fmt.Errorf("failed to rewrite task: %w", err)
+		}
 	}
 
 	return nil

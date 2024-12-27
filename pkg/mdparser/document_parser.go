@@ -8,54 +8,75 @@ import (
 	"github.com/avivSarig/cerebgo/pkg/ptr"
 )
 
-func DocumetToTask(doc MarkdownDocument) (models.Task, error) {
-	createdAtStr, err := getFrontmatterString(doc.Frontmatter, "created_at")
-	if err != nil {
-		return models.Task{}, fmt.Errorf("getting created_at: %w", err)
+func DocumentToTask(doc MarkdownDocument) (models.Task, error) {
+	// Helper to reduce error handling boilerplate
+	getFrontmatter := func(field string) (string, error) {
+		value, err := getFrontmatterString(doc.Frontmatter, field)
+		if err != nil {
+			return "", fmt.Errorf("getting %s: %w", field, err)
+		}
+		return value, nil
 	}
 
+	// Get and parse required fields
+	createdAtStr, err := getFrontmatter("created_at")
+	if err != nil {
+		return models.Task{}, err
+	}
 	createdAt, err := parseDate(createdAtStr)
 	if err != nil {
 		return models.Task{}, fmt.Errorf("parsing created_at: %w", err)
 	}
 
-	updatedAtStr, err := getFrontmatterString(doc.Frontmatter, "updated_at")
+	updatedAtStr, err := getFrontmatter("updated_at")
 	if err != nil {
-		return models.Task{}, fmt.Errorf("getting updated_at: %w", err)
+		return models.Task{}, err
 	}
-
 	updatedAt, err := parseDate(updatedAtStr)
 	if err != nil {
 		return models.Task{}, fmt.Errorf("parsing updated_at: %w", err)
 	}
 
-	// TODO: FIX
-	// // Get optional fields
-	// dueDate, err := getFrontmatterString(doc.Frontmatter, "due_date")
-	// var dueDateStr ptr.Option[string]
-	// if dueDate.IsValid() {
-	// 	// Convert time.Time back to string
-	// 	dueDateStr = ptr.Some(dueDate.Value().Format(time.RFC3339))
-	// } else {
-	// 	dueDateStr = ptr.None[string]()
-	// }
+	// Handle optional due date
+	var dueDateOpt ptr.Option[string]
+	if dueDateStr, err := getFrontmatter("due_date"); err == nil {
+		dueDate, err := parseDate(dueDateStr)
+		if err != nil {
+			return models.Task{}, fmt.Errorf("parsing due_date: %w", err)
+		}
+		dueDateOpt = ptr.Some(dueDate.Format(time.RFC3339))
+	} else {
+		dueDateOpt = ptr.None[string]()
+	}
 
-	// Get priority field and convert to boolean
-	// priority, err := getFrontmatterString(doc.Frontmatter, "priority")
-	// isHighPriority := priority == "high"
+	// Handle priority with proper error checking
+	priority, err := getFrontmatter("priority")
+	if err != nil {
+		// Assuming no priority means not high priority
+		priority = "normal"
+	}
+	isHighPriority := priority == "high"
+
+	// Validate required fields
+	if doc.Title == "" {
+		return models.Task{}, fmt.Errorf("task title is required")
+	}
+
+	is_project := doc.Content != ""
 
 	return models.Task{
 		Title:          doc.Title,
 		Content:        ptr.Some(doc.Content),
-		IsProject:      false,
-		IsHighPriority: false,
+		IsProject:      is_project,
+		IsHighPriority: isHighPriority,
 		Done:           false,
 		CreatedAt:      createdAt,
 		UpdatedAt:      updatedAt,
-		DueDate:        ptr.None[string](),
+		DueDate:        dueDateOpt,
 		CompletedAt:    ptr.None[time.Time](),
 	}, nil
 }
+
 func getFrontmatterString(fm map[string]interface{}, key string) (string, error) {
 	value, exists := fm[key]
 	if !exists {

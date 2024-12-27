@@ -84,7 +84,7 @@ func ParseMarkdownDoc(filePath string) (MarkdownDocument, error) {
 	}
 
 	// Parse frontmatter
-	// TODO: consider adding validation against schema here.
+	// FUTURE: consider adding validation against schema here.
 	frontmatter := strings.Join(lines[1:closingIndex], "\n")
 	var fm map[string]interface{}
 	if err := yaml.Unmarshal([]byte(frontmatter), &fm); err != nil {

@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/avivSarig/cerebgo/internal/models"
 	"github.com/avivSarig/cerebgo/pkg/files"
 	"github.com/avivSarig/cerebgo/pkg/mdparser"
 	"github.com/avivSarig/cerebgo/pkg/ptr"
+	"github.com/avivSarig/cerebgo/pkg/records"
 )
 
 // ReadTaskFile reads and parses a markdown file into a Task model
@@ -141,6 +143,13 @@ func DocumentToTask(doc mdparser.MarkdownDocument) (models.Task, error) {
 	return task, nil
 }
 
+// DeleteTaskFile deletes a task file from the filesystem
+//
+// Parameters:
+//   - task: task model to delete
+//
+// Returns:
+//   - error: deletion error with context
 func DeleteTaskFile(task models.Task, path string) error {
 	src := files.FilePath{
 		Dir:  path,
@@ -153,16 +162,78 @@ func DeleteTaskFile(task models.Task, path string) error {
 	return nil
 }
 
-// TODO: Implement writeTaskToFile
-// func writeTaskToFile(task models.Task, path string) error {
-// 	fm, doc := TaskToDoc(task)
-// 	return mdparser.WriteMarkdownDoc(fm, doc, path)
-// }
+// ArchiveTask archives by creating a record and deleting the task file
+//
+// Parameters:
+//   - task: task model to archive
+//
+// Returns:
+//   - error: writing or deletion error with context
+func ArchiveTask(task models.Task, now time.Time) error {
+	activePath := configuration.GetString("paths.subdir.tasks.active")
+	completedPath := configuration.GetString("paths.subdir.tasks.completed")
 
-// 	TODO: Implement ArchiveTask
-// Create an archive item in the archive directory
-// Populate new item with task data
-// Delete the original task file
-// func ArchiveTask(task models.Task, path string) error {
-// 	return nil
-// }
+	record := models.Record{
+		Title:      task.Title,
+		Content:    task.Content,
+		Tags:       make([]string, 0),
+		URL:        ptr.None[string](),
+		CreatedAt:  task.CreatedAt,
+		UpdatedAt:  task.UpdatedAt,
+		ArchivedAt: ptr.Some(now),
+	}
+
+	err := records.WriteRecordToFile(record, completedPath)
+	if err != nil {
+		return fmt.Errorf("failed to archive task: %w", err)
+	}
+
+	return DeleteTaskFile(task, activePath)
+}
+
+// WriteTaskToFile writes a task model to a markdown file
+//
+// Parameters:
+//   - task: task model to write
+//
+// Returns:
+//   - error: writing error with context
+//
+// FUTURE: consider add overwrite flag (at the moment, it always overwrites).
+func TaskToFile(task models.Task, path string) error {
+	fm := mdparser.Frontmatter{
+		"is_project":       task.IsProject,
+		"is_high_priority": task.IsHighPriority,
+		"done":             task.Done,
+		"do_date":          task.DoDate,
+		"created_at":       task.CreatedAt.Format(time.RFC3339),
+		"updated_at":       task.UpdatedAt.Format(time.RFC3339),
+	}
+
+	if task.CompletedAt.IsValid() {
+		fm["completed_at"] = task.CompletedAt.Value().Format(time.RFC3339)
+	}
+	if task.DueDate.IsValid() {
+		fm["due_date"] = task.DueDate.Value()
+	}
+
+	content := ""
+	if task.Content.IsValid() {
+		content = task.Content.Value()
+	}
+
+	filename := filepath.Join(path, task.Title+".md")
+	return mdparser.WriteMarkdownDoc(fm, content, filename)
+}
+
+// RewriteTask rewrites a task to a markdown file
+// Parameters:
+//   - task: task model to rewrite
+func RewriteTask(task models.Task, path string) error {
+
+	err := TaskToFile(task, path)
+	if err != nil {
+		return fmt.Errorf("failed to convert task to file: %w", err)
+	}
+	return nil
+}

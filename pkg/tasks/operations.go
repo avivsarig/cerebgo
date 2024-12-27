@@ -230,7 +230,15 @@ func HighPriorityModifier() TaskModifier {
 	}
 }
 
-// TODO: ArchiveModifier - convert to archive type (not implemented), move to archive directory
+func ArchiveModifier() TaskModifier {
+	return func(task models.Task, now time.Time) (models.Task, error) {
+		err := ArchiveTask(task, now)
+		if err != nil {
+			return models.Task{}, fmt.Errorf("failed to archive task: %w", err)
+		}
+		return models.Task{}, nil
+	}
+}
 
 // ComposeModifiers combines multiple TaskModifier functions into a single TaskModifier.
 // The modifiers are applied sequentially to the task.
@@ -252,4 +260,35 @@ func ComposeModifiers(modifiers ...TaskModifier) TaskModifier {
 		}
 		return result, nil
 	}
+}
+
+// ApplyModifiers applies a sequence of TaskModifiers to a task.
+//
+// Parameters:
+//   - task: The task to modify
+//   - now: Current timestamp
+//   - modifiers: The modifiers to apply
+//
+// Returns:
+//   - models.Task: The modified task or empty task if deleted
+//   - error: Error if any modifier fails
+func ApplyModifiers(task models.Task, now time.Time, modifiers ...TaskModifier) (models.Task, error) {
+	if len(modifiers) == 0 {
+		return task, nil
+	}
+
+	result := task
+	for _, modifier := range modifiers {
+		var err error
+		result, err = modifier(result, now)
+		if err != nil {
+			return models.Task{}, fmt.Errorf("modifier failed: %w", err)
+		}
+
+		if result == (models.Task{}) {
+			return result, nil
+		}
+	}
+
+	return result, nil
 }
