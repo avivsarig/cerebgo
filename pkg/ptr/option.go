@@ -46,5 +46,8 @@ func (o Option[T]) IsValid() bool {
 //
 //	The contained value of type T
 func (o Option[T]) Value() T {
+	if !o.valid {
+		panic("attempted to access Value() of None option")
+	}
 	return o.value
 }
