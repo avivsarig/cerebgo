@@ -1,6 +1,7 @@
 package records
 
 import (
+	"fmt"
 	"path/filepath"
 	"time"
 
@@ -18,6 +19,10 @@ import (
 //
 // FUTURE: consider add overwrite flag (at the moment, it always overwrites).
 func WriteRecordToFile(record models.Record, path string) error {
+	if record.Title == "" {
+		return fmt.Errorf("record title cannot be empty")
+	}
+
 	fm := mdparser.Frontmatter{
 		"tags":       record.Tags,
 		"created_at": record.CreatedAt,
