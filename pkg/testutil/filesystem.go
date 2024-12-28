@@ -10,28 +10,94 @@ import (
 	"github.com/avivSarig/cerebgo/internal/models"
 )
 
-func CreateTestTaskFile(t *testing.T, basePath string, filename string, task models.Task) error {
+// CreateTestDirectory creates a temporary directory for testing.
+// It registers a cleanup function to remove the directory after the test.
+func CreateTestDirectory(t *testing.T) string {
 	t.Helper()
 
-	if err := os.MkdirAll(basePath, 0755); err != nil {
+	dir := t.TempDir()
+	t.Cleanup(func() {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Errorf("failed to clean up test directory: %v", err)
+		}
+	})
+
+	return dir
+}
+
+// CreateTestFile creates a file with given content in the specified directory.
+func CreateTestFile(t *testing.T, dir string, filename string, content string) error {
+	t.Helper()
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory structure: %v", err)
 	}
 
-	content := generateTaskMarkdown(task)
-
-	fullPath := filepath.Join(basePath, filename)
+	fullPath := filepath.Join(dir, filename)
 	if err := os.WriteFile(fullPath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write task file: %v", err)
+		return fmt.Errorf("failed to write file: %v", err)
 	}
 
 	return nil
 }
 
+// CreateTestTaskFile creates a markdown file for a task.
+func CreateTestTaskFile(t *testing.T, basePath string, filename string, task models.Task) error {
+	t.Helper()
+	content := generateTaskMarkdown(task)
+	return CreateTestFile(t, basePath, filename, content)
+}
+
+// AssertFileExists checks if a file exists and fails the test if it doesn't.
 func AssertFileExists(t *testing.T, path string) {
 	t.Helper()
-
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Errorf("expected file to exist at %s, but it doesn't", path)
+	}
+}
+
+// AssertFileNotExists checks if a file doesn't exist and fails the test if it does.
+func AssertFileNotExists(t *testing.T, path string) {
+	t.Helper()
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Errorf("expected file to not exist at %s, but it does", path)
+	}
+}
+
+// AssertFileContent checks if a file's content matches the expected content.
+func AssertFileContent(t *testing.T, path string, expected string) {
+	t.Helper()
+
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Errorf("failed to read file at %s: %v", path, err)
+		return
+	}
+
+	if string(content) != expected {
+		t.Errorf("file content mismatch at %s\ngot: %s\nwant: %s",
+			path, content, expected)
+	}
+}
+
+// MoveTestFile moves a file in a test environment.
+// It fails the test if the operation fails.
+func MoveTestFile(t *testing.T, sourcePath, destPath string) {
+	t.Helper()
+
+	if err := os.Rename(sourcePath, destPath); err != nil {
+		t.Errorf("failed to move file from %s to %s: %v",
+			sourcePath, destPath, err)
+	}
+}
+
+// DeleteTestFile deletes a file in a test environment.
+// It fails the test if the operation fails.
+func DeleteTestFile(t *testing.T, path string) {
+	t.Helper()
+
+	if err := os.Remove(path); err != nil {
+		t.Errorf("failed to delete file at %s: %v", path, err)
 	}
 }
 
