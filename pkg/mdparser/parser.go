@@ -1,10 +1,12 @@
 package mdparser
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -17,16 +19,7 @@ type MarkdownDocument struct {
 }
 
 // ParseMarkdownDoc parses raw markdown text into a structured MarkdownDocument.
-// Handles headers, code blocks, paragraphs and basic markdown syntax.
-//
-// Parameters:
-//   - content: Raw markdown string to parse
-//
-// Returns:
-//
-//	Parsed MarkdownDocument, or error if parsing fails
 func ParseMarkdownDoc(filePath string) (MarkdownDocument, error) {
-
 	baseFile := filepath.Base(filePath)
 	title := strings.TrimSuffix(baseFile, filepath.Ext(baseFile))
 
@@ -84,14 +77,23 @@ func ParseMarkdownDoc(filePath string) (MarkdownDocument, error) {
 	}
 
 	// Parse frontmatter
-	// FUTURE: consider adding validation against schema here.
 	frontmatter := strings.Join(lines[1:closingIndex], "\n")
-	var fm map[string]interface{}
-	if err := yaml.Unmarshal([]byte(frontmatter), &fm); err != nil {
+	fm := make(map[string]interface{})
+
+	decoder := yaml.NewDecoder(bytes.NewReader([]byte(frontmatter)))
+	decoder.KnownFields(true)
+
+	if err := decoder.Decode(&fm); err != nil {
 		return MarkdownDocument{}, fmt.Errorf("invalid frontmatter YAML: %w", err)
 	}
 
-	// Get remaining content
+	// Convert time values to strings
+	for k, v := range fm {
+		if t, ok := v.(time.Time); ok {
+			fm[k] = t.Format("2006-01-02")
+		}
+	}
+
 	remainingContent := ""
 	if closingIndex+1 < len(lines) {
 		remainingContent = strings.TrimSpace(strings.Join(lines[closingIndex+1:], "\n"))

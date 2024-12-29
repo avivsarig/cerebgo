@@ -1,4 +1,4 @@
-package mdparser_test // Note the _test suffix to separate test package
+package mdparser_test
 
 import (
 	"os"
