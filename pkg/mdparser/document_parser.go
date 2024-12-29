@@ -8,6 +8,15 @@ import (
 	"github.com/avivSarig/cerebgo/pkg/ptr"
 )
 
+// DocumentToTask converts a markdown document to a Task object.
+// Processes frontmatter metadata (created_at, updated_at, due_date, priority) and document content.
+//
+// Parameters:
+//   - doc: MarkdownDocument containing frontmatter and content
+//
+// Returns:
+//   - models.Task: Constructed task object
+//   - error: If parsing fails due to missing required fields or invalid formats
 func DocumentToTask(doc MarkdownDocument) (models.Task, error) {
 	// Helper to reduce error handling boilerplate
 	getFrontmatter := func(field string) (string, error) {
@@ -77,6 +86,15 @@ func DocumentToTask(doc MarkdownDocument) (models.Task, error) {
 	}, nil
 }
 
+// getFrontmatterString extracts and type-checks a string value from frontmatter metadata.
+//
+// Parameters:
+//   - fm: Frontmatter key-value pairs
+//   - key: Key to lookup
+//
+// Returns:
+//   - string: Extracted string value
+//   - error: If key is missing or value is not a string
 func getFrontmatterString(fm map[string]interface{}, key string) (string, error) {
 	value, exists := fm[key]
 	if !exists {
@@ -91,6 +109,14 @@ func getFrontmatterString(fm map[string]interface{}, key string) (string, error)
 	return strValue, nil
 }
 
+// parseDate parses RFC3339 formatted date strings.
+//
+// Parameters:
+//   - dateStr: RFC3339 formatted date string
+//
+// Returns:
+//   - time.Time: Parsed time object
+//   - error: If parsing fails
 func parseDate(dateStr string) (time.Time, error) {
 	return time.Parse(time.RFC3339, dateStr)
 }
