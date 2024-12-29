@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/avivSarig/cerebgo/internal/models"
+	"github.com/spf13/viper"
 )
 
 // CreateTestDirectory creates a temporary directory for testing.
@@ -139,4 +140,39 @@ do_date: %s
 	}
 
 	return content
+}
+
+// setupConfigDir creates a temporary directory and config file for testing.
+// It returns the directory path. The directory is automatically cleaned up after the test.
+func SetupConfigDir(t *testing.T, content string) string {
+	t.Helper()
+	dir := CreateTestDirectory(t)
+	err := CreateTestFile(t, dir, "config.yaml", content)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
+// setConfigPath sets the CONFIG_PATH environment variable for testing and
+// ensures it's restored to its original value after the test completes.
+func SetConfigPath(t *testing.T, path string) {
+	t.Helper()
+	oldEnv := os.Getenv("CONFIG_PATH")
+	os.Setenv("CONFIG_PATH", path)
+	t.Cleanup(func() {
+		os.Setenv("CONFIG_PATH", oldEnv)
+	})
+}
+
+// validateConfig checks if the loaded configuration matches expected values.
+// It verifies both top-level and nested configuration settings.
+func ValidateConfig(t *testing.T, v *viper.Viper) {
+	t.Helper()
+	if v.GetString("key") != "value" {
+		t.Errorf("key = %v, want %v", v.GetString("key"), "value")
+	}
+	if v.GetInt("nested.setting") != 42 {
+		t.Errorf("nested.setting = %v, want %v", v.GetInt("nested.setting"), 42)
+	}
 }
