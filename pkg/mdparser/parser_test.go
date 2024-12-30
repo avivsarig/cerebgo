@@ -1,4 +1,4 @@
-package mdparser
+package mdparser_test
 
 import (
 	"os"
@@ -7,31 +7,32 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/avivSarig/cerebgo/pkg/mdparser"
 	"github.com/avivSarig/cerebgo/pkg/testutil"
 )
 
-func TestParseMarkdownDoc(t *testing.T) {
+func TestParseMarkdownDocFileHandling(t *testing.T) {
 	// Create temporary test directory
 	testDir := testutil.CreateTestDirectory(t)
 
 	tests := []struct {
 		name        string
 		content     string
-		want        MarkdownDocument
+		want        mdparser.MarkdownDocument
 		wantErr     bool
 		errContains string
 	}{
 		{
 			name:    "empty file",
 			content: "",
-			want: MarkdownDocument{
+			want: mdparser.MarkdownDocument{
 				Title: "test",
 			},
 		},
 		{
 			name:    "content only, no frontmatter",
 			content: "# Hello World",
-			want: MarkdownDocument{
+			want: mdparser.MarkdownDocument{
 				Title:   "test",
 				Content: "# Hello World",
 			},
@@ -43,7 +44,7 @@ title: Test
 date: 2024-01-01
 ---
 # Content here`,
-			want: MarkdownDocument{
+			want: mdparser.MarkdownDocument{
 				Title: "test",
 				Frontmatter: map[string]interface{}{
 					"title": "Test",
@@ -57,7 +58,7 @@ date: 2024-01-01
 			content: `---
 key: value
 ---`,
-			want: MarkdownDocument{
+			want: mdparser.MarkdownDocument{
 				Title: "test",
 				Frontmatter: map[string]interface{}{
 					"key": "value",
@@ -127,7 +128,7 @@ key: : invalid : yaml :
 			}
 
 			// Run test
-			got, err := ParseMarkdownDoc(filepath)
+			got, err := mdparser.ParseMarkdownDoc(filepath)
 
 			// Verify error cases
 			if tt.wantErr {
@@ -192,7 +193,7 @@ func TestParseMarkdownDoc_FileErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			filepath := tt.setup(t)
-			_, err := ParseMarkdownDoc(filepath)
+			_, err := mdparser.ParseMarkdownDoc(filepath)
 
 			if tt.wantErr {
 				if err == nil {

@@ -134,7 +134,7 @@ func TestDocumentToTask(t *testing.T) {
 	}
 }
 
-func TestParseMarkdownDoc(t *testing.T) {
+func TestParseMarkdownDocFrontmatter(t *testing.T) {
 	tests := []struct {
 		name     string
 		content  string

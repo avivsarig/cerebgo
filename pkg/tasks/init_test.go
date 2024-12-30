@@ -1,9 +1,9 @@
-// init_test.go
-package tasks
+package tasks_test
 
 import (
 	"testing"
 
+	"github.com/avivSarig/cerebgo/pkg/tasks"
 	"github.com/avivSarig/cerebgo/pkg/testutil"
 )
 
@@ -73,7 +73,7 @@ func TestInitialization(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset state before each test
-			resetForTesting()
+			tasks.ResetForTesting()
 
 			// Setup test environment
 			if tt.setupEnv != nil {
@@ -81,7 +81,7 @@ func TestInitialization(t *testing.T) {
 			}
 
 			// Test initialization
-			err := Initialize()
+			err := tasks.Initialize()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Initialize() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -89,7 +89,7 @@ func TestInitialization(t *testing.T) {
 
 			if err == nil {
 				// Test GetConfig
-				config, err := GetConfig()
+				config, err := tasks.GetConfig()
 				if err != nil {
 					t.Errorf("GetConfig() unexpected error = %v", err)
 					return

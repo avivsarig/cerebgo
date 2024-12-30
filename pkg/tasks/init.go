@@ -59,7 +59,7 @@ func GetConfig() (*viper.Viper, error) {
 }
 
 // For testing purposes only.
-func resetForTesting() {
+func ResetForTesting() {
 	configuration = nil
 	initOnce = sync.Once{}
 	initErr = nil
