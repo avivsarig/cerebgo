@@ -176,3 +176,10 @@ func ValidateConfig(t *testing.T, v *viper.Viper) {
 		t.Errorf("nested.setting = %v, want %v", v.GetInt("nested.setting"), 42)
 	}
 }
+
+func SetEnv(t *testing.T, key, value string) {
+	t.Helper()
+	if err := os.Setenv(key, value); err != nil {
+		t.Fatalf("Failed to set env var %s: %v", key, err)
+	}
+}

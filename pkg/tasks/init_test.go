@@ -26,6 +26,8 @@ paths: [invalid: yaml
 `
 
 func TestInitialization(t *testing.T) {
+	testutil.SetEnv(t, "DATA_PATH", "/test/data")
+
 	tests := []struct {
 		name       string
 		configYAML string

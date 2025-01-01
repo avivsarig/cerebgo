@@ -10,7 +10,7 @@ paths:
 
   subdirs:
     tasks:
-      completed: Tasks/Completed
+      completed: Completed
 
     journal:
       completed: Journals/completed

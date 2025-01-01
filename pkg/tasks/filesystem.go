@@ -170,8 +170,14 @@ func DeleteTaskFile(task models.Task, path string) error {
 // Returns:
 //   - error: writing or deletion error with context
 func ArchiveTask(task models.Task, now time.Time) error {
-	activePath := configuration.GetString("paths.subdir.tasks.active")
-	completedPath := configuration.GetString("paths.subdir.tasks.completed")
+	activePath := filepath.Join(
+		configuration.GetString("base_path"),
+		configuration.GetString("paths.base.tasks"),
+	)
+	completedPath := filepath.Join(
+		configuration.GetString("base_path"),
+		configuration.GetString("paths.subdirs.tasks.completed"),
+	)
 
 	record := models.Record{
 		Title:      task.Title,

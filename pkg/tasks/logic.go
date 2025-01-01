@@ -17,7 +17,7 @@ import (
 //   - []TaskAction: The actions to take on the task.
 //   - error: An error if the actions cannot be planned.
 func PlanCompletedTaskActions(task models.Task, now time.Time, config RetentionConfig) ([]TaskModifier, error) {
-	dir := configuration.GetString("paths.subdir.tasks.completed")
+	dir := configuration.GetString("paths.subdirs.tasks.completed")
 	actions := make([]TaskModifier, 0)
 
 	if !IsCompleted(task) {

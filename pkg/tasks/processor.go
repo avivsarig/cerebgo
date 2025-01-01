@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
@@ -13,9 +14,14 @@ func ProcessAllTasks(now time.Time, configuration *viper.Viper) error {
 		ProjectRetention:   time.Duration(configuration.GetInt("settings.retention.project_before_archive")) * 24 * time.Hour,
 	}
 
-	completedTasksPath := configuration.GetString("paths.subdirs.tasks.completed")
-	activeTasksPath := configuration.GetString("paths.base.tasks")
-
+	activeTasksPath := filepath.Join(
+		configuration.GetString("base_path"),
+		configuration.GetString("paths.base.tasks"),
+	)
+	completedTasksPath := filepath.Join(
+		configuration.GetString("base_path"),
+		configuration.GetString("paths.subdirs.tasks.completed"),
+	)
 	// process completed tasks:
 	completedTasks, err := readTasksFromDirectory(completedTasksPath)
 	if err != nil {

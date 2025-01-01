@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/avivSarig/cerebgo/config"
@@ -17,6 +18,12 @@ var (
 // validateConfiguration ensures all required configuration fields are present.
 // Returns an error if any required field is missing.
 func validateConfiguration(v *viper.Viper) error {
+	dataPath := os.Getenv("DATA_PATH")
+	if dataPath == "" {
+		return fmt.Errorf("DATA_PATH environment variable not set")
+	}
+	v.Set("base_path", dataPath)
+
 	requiredPaths := []string{
 		"paths.base.tasks",
 		"paths.base.journal",

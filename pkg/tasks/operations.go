@@ -143,11 +143,11 @@ func DeactivateModifier() TaskModifier {
 	return func(task models.Task, now time.Time) (models.Task, error) {
 		err := files.MoveFile(
 			files.FilePath{
-				Dir:  configuration.GetString("paths.subdir.tasks.active"),
+				Dir:  configuration.GetString("paths.base.tasks"),
 				Name: task.Title + ".md",
 			},
 			files.FilePath{
-				Dir:  configuration.GetString("paths.subdir.tasks.completed"),
+				Dir:  configuration.GetString("paths.subdirs.tasks.completed"),
 				Name: task.Title + ".md",
 			},
 		)
@@ -164,11 +164,11 @@ func ReactivateModifier() TaskModifier {
 	return func(task models.Task, now time.Time) (models.Task, error) {
 		err := files.MoveFile(
 			files.FilePath{
-				Dir:  configuration.GetString("paths.subdir.tasks.completed"),
+				Dir:  configuration.GetString("paths.subdirs.tasks.completed"),
 				Name: task.Title + ".md",
 			},
 			files.FilePath{
-				Dir:  configuration.GetString("paths.subdir.tasks.active"),
+				Dir:  configuration.GetString("paths.base.tasks"),
 				Name: task.Title + ".md",
 			},
 		)
