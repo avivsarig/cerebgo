@@ -1,24 +1,24 @@
 # Directory Structure
 paths:
   base:
-    inbox: inbox.md
-    tasks: /tasks
-    journal: /journal
-    lists: /lists
-    people: /people
-    archives: /archives
+    inbox: Notes.md
+    tasks: Tasks
+    journal: Journals
+    lists: Lists
+    people: People
+    archives: Knowledge Archive
 
   subdirs:
     tasks:
-      completed: ${paths.base.tasks}/completed
+      completed: Tasks/Completed
 
     journal:
-      completed: ${paths.base.journal}/completed
+      completed: Journals/completed
 
 # User Journals
 journals:
-  - name: belle
-  - name: pure
+  - name: Belle
+  - name: Pure
 
 # System Settings
 settings:
@@ -28,4 +28,4 @@ settings:
 
   patterns:
     date_format: "YYYY-MM-DD"
-    file_format: "*-${date_format}"
+    file_format: "*-YYYY-MM-DD"

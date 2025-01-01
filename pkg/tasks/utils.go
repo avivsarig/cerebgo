@@ -36,6 +36,13 @@ func IsValidDoDate(t models.Task, now time.Time) bool {
 	return !nowDate.After(doDate)
 }
 
+// IsValidDueDate checks if the task's DueDate is valid - has valid format and is not in the past
+//
+// Parameters:
+//   - task: Task to check
+//
+// Returns:
+//   - bool: true if task's DoDate is valid
 func IsValidDueDate(t models.Task, now time.Time) bool {
 	if !t.DueDate.IsValid() {
 		return false

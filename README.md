@@ -1,97 +1,254 @@
-# Markdown Task Management System
+# Cerebgo - Functional Markdown Task Management
 
-A functional Go implementation for managing tasks and notes using markdown files. The system separates processing logic (this repository) from content storage, enabling public collaboration while maintaining data privacy.
+Cerebgo is a Go-based task management system that processes markdown files.
+I designed it to process markdown files in private repos - originally for my Obsidian notes, while the code itself is available at a public repository.
+It is a learning project to learn Go, and practice pseudo-functional programming to expand my knowledge.
 
-## Features
+## Philosophy and Intended Use
 
-- Pure functional approach to markdown processing
-- Automated task categorization and organization
-- Journal entry processing with action item extraction
-- Cross-referenced people mentions
-- Reading list management
-- Secure multi-repository architecture
+This is a personal take on `Getting Things Done` and `Building a Second Brain`.
 
-## Architecture
+The system helps organize information and tasks through several key components:
 
-The system operates across two repositories:
+- Notes serve as an Inbox - a place to quickly capture information and action items before they slip away - ideally it should be cleared as often as possible
 
-- Public (this repo): Contains processing logic and GitHub Actions
-- Private: Stores markdown content and configuration
+- Daily journals are used to record events and link them to tasks, people, and archived records for better context and retrieval
+
+- Tasks represent actions that need to be done - from simple actions like "Turn the light off" to complex projects like "Research before buying a car". They are handled differently based on their nature:
+
+  - Tasks with content are marked as projects and moved to archives when done, preserving the knowledge
+  - Simple tasks without content remain briefly after completion, then are cleaned up automatically
+
+- Archives store collected knowledge with tags for easy retrieval
+
+- Lists (name pending) keep track of media to consume - articles, movies, and books
+
+## Current Features
+
+The system processes task files in two main places:
+
+- Active Tasks - These need attention and action
+- Completed Tasks - These are done and waiting to be either archived or cleaned up
+
+Currently, the system helps by:
+
+- Updating `Do Date` (when a task is planned to be worked on) to not be in the past
+- Converting standalone tasks to projects when content is added
+- Cleaning up completed tasks based on their type and age
+
+## Approach and Architecture
+
+### Repository Separation
+
+This system is meant to be run on two separated Github Repositories:
+
+Private Repository
+
+- This repository stores all markdown files in the structure mentioned in [Philosophy and Intended Use](##Philosophy-and-Intended-Use)
+
+- The repository should stay private to protect your files, assuming this system is used for personal use
+
+- Run the Github Actions Workflows from this repository to process your files in a secure manner
+
+Public Repository (this one)
+
+- Contains the processing logic in executable scripts, including:
+  - Task management engine
+  - Supporting modules for parsing, process and file management
+  - Docker packaging and Github Actions workflows
+
+#### Security Considerations
+
+The repository separation design provides several security benefits:
+
+- Data Privacy:
+  - Personal information remains in your private repository
+  - Processing logic is public but can't access your data without proper credentials
+- Access Control
+  - The public repository contains no sensitive information
+  - Private repository access is limited to authorized users
+  - GitHub Actions use restricted tokens
+- Configuration Security
+  - Sensitive paths and settings are stored in the private repository
+  - Environment variables are used for runtime configuration
+  - No hardcoded secrets in the codebase
+- Process Isolation
+  - Docker containers run with limited permissions
+  - File system access is restricted to configured paths
+  - No network access required during processing
 
 ### Data Flow
 
-1. Changes in private repository trigger GitHub Actions
-2. Processing logic operates on markdown files
-3. Content is automatically organized based on rules
-4. Updates are committed back to private repository
+The process:
+
+1. Tasks are created as markdown files with YAML frontmatter
+2. The system processes these files using configurable rules
+3. Task states and metadata get updated automatically
+4. Changes are saved back to the files
 
 ## Getting Started
 
 ### Prerequisites
 
-- Go 1.21 or higher
-- Make
-- GitHub account (for Actions)
+- Go 1.22 or higher
+- Git
+- GitHub account
+- Docker (optional)
 
-### Installation
+### Setting Up Private Repository
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/task-management
-cd task-management
+1. Create a new private GitHub repository
+2. Create the following directory structure:
 
-# Install dependencies
-make dev-deps
+```
+.
+├── config/
+│   └── config.yaml
+├── tasks/
+│   └── completed/
+├── journal/
+│   └── completed/
+├── archives/
+└── lists/
 ```
 
-### Basic Setup
+3. Create the configuration file at "/config/config.yaml"
 
-1. Set up your private repository following the [Private Repo Setup Guide](docs/private-repo-setup.md)
-2. Configure GitHub Actions in your private repository
-3. Add your first markdown files
+```
+paths:
+  base:
+    inbox: inbox.md
+    tasks: /tasks
+    journal: /journal
+    lists: /lists
+    people: /people
+    archives: /archives
 
-### Configuration
+  subdirs:
+    tasks:
+      completed: ${paths.base.tasks}/completed
 
-Configure system behavior through your private repository:
+    journal:
+      completed: ${paths.base.journal}/completed
 
-- File organization rules
-- Task categorization settings
-- Processing schedules
-- Security parameters
+# User Journals
+journals:
+  - name: belle
+  - name: pure
 
-## Development
+# System Settings
+settings:
+  retention:
+    empty_task: 30
+    project_before_archive: 7
 
-### Available Commands
-
-```bash
-make help     # Show all available commands
-make all      # Run full check suite (fmt, vet, lint, test, build)
-make test     # Run tests with race detection
-make fmt      # Format code
-make lint     # Run linter
-make coverage # Generate test coverage report
+  patterns:
+    date_format: "YYYY-MM-DD"
+    file_format: "*-${date_format}"
 ```
 
-### Development Workflow
+4. Set up GitHub Actions:
+   - Create `.github/workflows/process.yml`
 
-```bash
-make watch-test  # Run tests automatically on file changes
-make docker-test # Run tests in Docker environment
+```
+name: Process Tasks
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 _/6 _ \* \*' # Run every 6 hours
+  workflow_dispatch:
+
+jobs:
+process:
+runs-on: ubuntu-latest
+steps: - uses: actions/checkout@v4
+
+      - name: Process Tasks
+        uses: docker://ghcr.io/avivsarig/cerebgo:latest
+        env:
+          CONFIG_PATH: ${{ secrets.CONFIG_PATH }}
+
+      - name: Commit changes
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add .
+          git diff --staged --quiet || git commit -m "Auto-process tasks"
+          git push
 ```
 
-## Design Philosophy
+- Add the following secure secrets:
+  - `CEREBGO_TOKEN`: GitHub token with repo access
+  - `CONFIG_PATH`: Path to your config directory
 
-- Emphasis on immutable data structures
-- Pure functions where possible
-- Clear data transformation pipelines
-- Strong type safety
-- Comprehensive testing
-- Security by design
+### Running Locally
 
-## Contributing
+```bash
+# Clone both repositories
+git clone https://github.com/yourusername/cerebgo-private private
+git clone https://github.com/avivsarig/cerebgo cerebgo
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+# Build Cerebgo
+cd cerebgo
+go build -o cerebgo ./cmd/main/main.go
+
+# Run with your config
+export CONFIG_PATH=/path/to/private/config
+./cerebgo
+```
+
+### Docker Deployment
+
+```bash
+# Build image
+docker build -t cerebgo .
+
+# Run with mounted config
+docker run -v /path/to/private/config:/app/config cerebgo
+```
+
+## Configuration
+
+The system uses a YAML configuration file (config.yaml) that defines:
+
+- Directory structures for tasks and journals
+- File naming patterns
+- Retention policies for completed tasks
+- System-wide settings
+
+Example configuration:
+
+```yaml
+paths:
+  base:
+    tasks: /tasks
+    journal: /journal
+
+settings:
+  retention:
+    empty_task: 30 # days to keep completed non-project tasks
+    project_before_archive: 7 # days to keep completed projects
+```
+
+## Project Roadmap
+
+### Soon
+
+- Support repetitive tasks
+- Daily reports and planning
+- Journal and Notes processing for action items and archive records extraction
+- Better testing
+
+### Eventually
+
+- LLM integration for:
+  - Recommendation of relevant archive records in newly created tasks
+  - Periodical Journal summaries
+  - Better reports
+  - Tasks creation for Lists
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This code is under the MIT License - see the LICENSE file for the details.

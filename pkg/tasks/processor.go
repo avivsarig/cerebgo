@@ -13,10 +13,8 @@ func ProcessAllTasks(now time.Time, configuration *viper.Viper) error {
 		ProjectRetention:   time.Duration(configuration.GetInt("settings.retention.project_before_archive")) * 24 * time.Hour,
 	}
 
-	completedTasksPath := configuration.GetString("paths.subdir.tasks.completed")
-	activeTasksPath := configuration.GetString("paths.subdir.tasks.completed")
-
-	// FUTURE: add logging
+	completedTasksPath := configuration.GetString("paths.subdirs.tasks.completed")
+	activeTasksPath := configuration.GetString("paths.base.tasks")
 
 	// process completed tasks:
 	completedTasks, err := readTasksFromDirectory(completedTasksPath)
