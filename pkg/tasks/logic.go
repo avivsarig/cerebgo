@@ -67,9 +67,7 @@ func PlanActiveTaskActions(task models.Task, now time.Time) ([]TaskModifier, err
 		actions = append(actions, DoDateTodayModifier())
 	}
 
-	if IsValidDueDate(task, now) {
-		actions = append(actions, HighPriorityModifier())
-	}
+	// FUTURE: Handle high priority according to DueDate
 
 	if task.Done {
 		actions = append(actions, CompletionModifier(now))
